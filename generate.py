@@ -85,6 +85,11 @@ PLATFORM_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"-windows-x64-jdk\.zip$"), "windows/amd64"),
 ]
 
+# Every declared platform in mirror.yml. A version is mirrored only if it ships
+# all of these (see the skip in main()); partial Linux-only re-release builds are
+# dropped so no test leg is left without a bundle.
+REQUIRED_PLATFORMS = frozenset(p for _, p in PLATFORM_PATTERNS)
+
 
 def log(message: str) -> None:
     sys.stderr.write(f"generate: {message}\n")
@@ -169,16 +174,29 @@ def main() -> int:
             # in the release-notes body on the corretto.aws CDN.
             urls = extract_urls(release.body, pattern=r"corretto\.aws/downloads")
 
-            assets: dict[str, str] = {}
+            by_platform: dict[str, str] = {}
             for url in urls:
-                if classify_url(url) is None:
+                platform = classify_url(url)
+                if platform is None:
                     continue
-                filename = url.rsplit("/", 1)[-1]
-                assets.setdefault(filename, url)
+                by_platform.setdefault(platform, url)
 
-            if not assets:
-                log(f"  skip {release.tag_name} -> {ocx_version} (no portable assets)")
+            # Mirror a version only when it ships EVERY declared platform. Corretto
+            # occasionally publishes Linux-only re-release builds (e.g. 21.0.9.11.1
+            # alongside the full 21.0.9.10.1) whose macOS/Windows tarballs simply do
+            # not exist on the CDN. Mirroring such a partial version would leave the
+            # darwin/windows test legs with no bundle (exit 74) and red the run. The
+            # full build of each (major.minor.update) is retained; only the partial
+            # re-release is skipped.
+            missing = REQUIRED_PLATFORMS - set(by_platform)
+            if missing:
+                log(
+                    f"  skip {release.tag_name} -> {ocx_version} "
+                    f"(incomplete coverage; missing {sorted(missing)})"
+                )
                 continue
+
+            assets = {url.rsplit("/", 1)[-1]: url for url in by_platform.values()}
 
             log(f"  {release.tag_name} -> {ocx_version} ({len(assets)} assets)")
             index.add_version(ocx_version, assets=assets, prerelease=False)
