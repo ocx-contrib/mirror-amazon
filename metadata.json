@@ -11,7 +11,8 @@
       "key": "JAVA_HOME",
       "type": "constant",
       "required": true,
-      "value": "${installPath}"
+      "value": "${installPath}",
+      "visibility": "public"
     }
   ]
 }

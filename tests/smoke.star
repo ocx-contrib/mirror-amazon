@@ -27,10 +27,13 @@ expect.contains(r.stdout, "42")
 # path, proving bin/java finds its sibling lib/ after the bundle is relocated
 # into the install tree.
 #
-# NOTE: metadata.json also wires JAVA_HOME as a `constant` env var, but
-# constants are composed at install/activate time — `ocx package test`
-# composes only `path`-type vars (PATH, proven by Tiers 1-3), so JAVA_HOME is
-# not visible inside the test sandbox and is intentionally not asserted here.
+# NOTE: metadata.json wires JAVA_HOME as a `constant` env var with
+# `visibility: public` (so it IS exported to consumers — omitting visibility
+# would default it `private` and silently drop the export). Constants are
+# composed at install/activate time; `ocx package test` composes only
+# `path`-type vars (PATH, proven by Tiers 1-3), so JAVA_HOME is not visible
+# inside the test sandbox regardless of visibility, and is intentionally not
+# asserted here — the java.home check below is the functional equivalent.
 r = ocx.run(JAVA, "-XshowSettings:properties", "-version")
 expect.ok(r)
 expect.matches(r.stdout + r.stderr, r"java\.home = \S+")
