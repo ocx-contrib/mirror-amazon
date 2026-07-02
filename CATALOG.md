@@ -43,3 +43,14 @@ Use `corretto:21` for the latest JDK 21 release, or `corretto:latest` for the ne
 - [Amazon Corretto Documentation](https://docs.aws.amazon.com/corretto/)
 - [Corretto on GitHub](https://github.com/corretto)
 - [Corretto Downloads](https://aws.amazon.com/corretto/)
+
+## License & source
+
+The Corretto JDK binaries redistributed here are licensed
+**GPLv2-with-Classpath-Exception** (© Amazon Web Services; same license as
+OpenJDK). The complete Corresponding Source for each mirrored version is the
+OpenJDK source in the per-major upstream repo at the matching git tag —
+`corretto/corretto-{8,11,17,21,25}` — e.g. OCX `21.0.10_7001` → `git clone
+https://github.com/corretto/corretto-21 && git checkout 21.0.10.7.1` (see the
+version-scheme table above for the tag mapping). A 3-year written offer for the
+source is in `NOTICE.md`. The OCX mirror pipeline files are Apache-2.0.
