@@ -3,7 +3,7 @@
 # dependencies = ["ocx-mirror-sdk"]
 #
 # [tool.uv.sources]
-# ocx-mirror-sdk = { url = "https://github.com/ocx-sh/ocx-mirror-sdk/releases/download/v0.4.0/ocx_mirror_sdk-0.4.0-py3-none-any.whl" }
+# ocx-mirror-sdk = { url = "https://github.com/ocx-sh/ocx-mirror-sdk/releases/download/v0.5.2/ocx_mirror_sdk-0.5.2-py3-none-any.whl" }
 # ///
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 The OCX Authors
@@ -67,19 +67,32 @@ MAJOR_FLOORS: dict[int, tuple[int, ...]] = {
 
 # Sidecars and non-portable artifacts to exclude: signatures, checksums,
 # OS installers (deb/rpm/pkg/msi), JRE-only, jmods, headful, and the
-# alpine/musl tarballs (we mirror the glibc Linux builds).
+# `amazon-corretto-debugsymbols-*` tarballs — those share every platform suffix
+# with the real JDK tarball and would otherwise classify as a JDK.
 EXCLUDE_RE = re.compile(
     r"\.(deb|rpm|pkg|msi)$"
-    r"|-jre-|-headful-|-jmods-|-alpine-"
+    r"|-debugsymbols-|-jre-|-headful-|-jmods-"
     r"|\.sig$|\.md5$|\.sha256$|\.sha256sum$|\.asc$|\.minisig$"
 )
 
 # Platform patterns: anchored on the asset filename suffix → platform key.
 # windows-x86 (32-bit, JDK 8 only) is intentionally unmatched — no OCX
 # platform for it.
+#
+# The Alpine (musl) tarballs are named `-alpine-linux-<arch>.tar.gz`, so the
+# glibc suffix `-linux-<arch>.tar.gz` is a substring of the musl one. The
+# negative lookbehind is what keeps the glibc pattern from swallowing the
+# Alpine asset; without it, classification would depend on the order URLs
+# happen to appear in the release-notes body.
+#
+# Both Linux builds are dynamically linked against their own loader (neither is
+# static), so both keys carry an explicit libc feature — see the measurement
+# recorded above `assets:` in mirror.yml.
 PLATFORM_PATTERNS: list[tuple[re.Pattern[str], str]] = [
-    (re.compile(r"-linux-x64\.tar\.gz$"), "linux/amd64"),
-    (re.compile(r"-linux-aarch64\.tar\.gz$"), "linux/arm64"),
+    (re.compile(r"(?<!-alpine)-linux-x64\.tar\.gz$"), "linux/amd64+libc.glibc"),
+    (re.compile(r"(?<!-alpine)-linux-aarch64\.tar\.gz$"), "linux/arm64+libc.glibc"),
+    (re.compile(r"-alpine-linux-x64\.tar\.gz$"), "linux/amd64+libc.musl"),
+    (re.compile(r"-alpine-linux-aarch64\.tar\.gz$"), "linux/arm64+libc.musl"),
     (re.compile(r"-macosx-x64\.tar\.gz$"), "darwin/amd64"),
     (re.compile(r"-macosx-aarch64\.tar\.gz$"), "darwin/arm64"),
     (re.compile(r"-windows-x64-jdk\.zip$"), "windows/amd64"),
@@ -139,6 +152,41 @@ def classify_url(url: str) -> str | None:
         if pattern.search(url):
             return platform
     return None
+
+
+def self_check() -> int:
+    """Assert the asset classification against real 21.0.12.8.1 filenames.
+
+    Run with `uv run scripts/generate.py --self-check`. Guards the two things
+    that silently mis-mirror rather than red: the alpine/glibc suffix overlap,
+    and the debugsymbols tarballs that share every platform suffix.
+    """
+    base = "https://corretto.aws/downloads/resources/21.0.12.8.1/amazon-corretto-"
+    expected = {
+        "21.0.12.8.1-linux-x64.tar.gz": "linux/amd64+libc.glibc",
+        "21.0.12.8.1-linux-aarch64.tar.gz": "linux/arm64+libc.glibc",
+        "21.0.12.8.1-alpine-linux-x64.tar.gz": "linux/amd64+libc.musl",
+        "21.0.12.8.1-alpine-linux-aarch64.tar.gz": "linux/arm64+libc.musl",
+        "21.0.12.8.1-macosx-x64.tar.gz": "darwin/amd64",
+        "21.0.12.8.1-macosx-aarch64.tar.gz": "darwin/arm64",
+        "21.0.12.8.1-windows-x64-jdk.zip": "windows/amd64",
+        # Everything below must classify as None.
+        "debugsymbols-21.0.12.8.1-linux-x64.tar.gz": None,
+        "debugsymbols-21.0.12.8.1-alpine-linux-aarch64.tar.gz": None,
+        "21.0.12.8.1-linux-x64.tar.gz.sig": None,
+        "21.0.12.8.1-windows-x64.msi": None,
+        "8.502.07.1-windows-x86-jdk.zip": None,
+        "8.502.07.1-windows-x64-jre.zip": None,
+    }
+    for name, want in expected.items():
+        got = classify_url(base + name)
+        assert got == want, f"{name}: expected {want}, got {got}"
+
+    assert set(expected.values()) - {None} == REQUIRED_PLATFORMS
+    assert corretto_to_ocx((21, 0, 12, 8, 1), 21) == "21.0.12_8001"
+    assert corretto_to_ocx((8, 502, 7, 1), 8) == "8.0.502_7001"
+    log(f"self-check ok — {len(expected)} filenames")
+    return 0
 
 
 def main() -> int:
@@ -214,4 +262,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(self_check() if "--self-check" in sys.argv[1:] else main())

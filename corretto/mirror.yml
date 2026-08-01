@@ -1,0 +1,129 @@
+extends: ../mirror-base.yml
+
+name: corretto
+
+# Logical index package `amazon/corretto` lives at the physical path
+# `ghcr.io/ocx-contrib/amazon/corretto` — slash segments, never
+# hyphen-flattened. The namespace names the distributor whose bytes we ship
+# (Amazon), not OpenJDK's author: these are Amazon's builds and the provenance
+# belongs to them.
+target:
+  registry: ghcr.io
+  repository: ocx-contrib/amazon/corretto
+
+# Corretto ships no GitHub release assets — download URLs live in the
+# release-notes body on the corretto.aws CDN. scripts/generate.py scrapes them
+# and emits a url_index covering ALL mirrored JDK majors (8, 11, 17, 21, 25).
+# Per-major patch floors live in that script (MAJOR_FLOORS).
+#
+# `command` resolves against THIS spec's directory, so the path is
+# `scripts/generate.py` and not `corretto/scripts/generate.py`.
+source:
+  type: url_index
+  generator:
+    command: ["uv", "run", "scripts/generate.py"]
+    timeout_seconds: 240
+
+# ─── libc gate (Phase 3.5) — the evidence, not the conclusion ───────────────
+#
+# Upstream ships a glibc Linux build and a SEPARATE musl (Alpine) build for
+# both Linux arches. Measured 2026-08-01 on `bin/java` extracted from all four
+# 21.0.12.8.1 tarballs:
+#
+#   -linux-x64.tar.gz            ELF x86-64, dynamically linked,
+#                                interpreter /lib64/ld-linux-x86-64.so.2
+#                                NEEDED libz.so.1 libjli.so libpthread libdl libc.so.6
+#   -linux-aarch64.tar.gz        interpreter /lib/ld-linux-aarch64.so.1, same NEEDED set
+#   -alpine-linux-x64.tar.gz     interpreter /lib/ld-musl-x86_64.so.1
+#                                NEEDED libjli.so libc.musl-x86_64.so.1
+#   -alpine-linux-aarch64.tar.gz interpreter /lib/ld-musl-aarch64.so.1
+#                                NEEDED libjli.so libc.musl-aarch64.so.1
+#
+# NEITHER is static — each names its own loader in PT_INTERP — so neither
+# covers the other, and both Linux keys carry an explicit libc feature. The
+# container legs in ../mirror-base.yml are what turn those claims into
+# evidence: the glibc keys get ubuntu+fedora and no alpine, the musl keys get
+# alpine and nothing else.
+#
+# ─── Asset naming — the trap ────────────────────────────────────────────────
+#
+# The versioned CDN filenames put `alpine` BEFORE `linux`
+# (`amazon-corretto-21.0.12.8.1-alpine-linux-x64.tar.gz`), so a glibc pattern
+# written `.*-linux-x64\.tar\.gz$` matches the Alpine tarball too — and
+# `amazon-corretto-debugsymbols-<ver>-linux-x64.tar.gz` as well. Both would be
+# ambiguous multi-matches. `[^-]+` pins the wildcard to the dotted version
+# segment, which never contains a dash, and rejects both.
+#
+# (The unversioned `…/latest/` CDN aliases use a *different* scheme —
+# `amazon-corretto-21-x64-alpine-jdk.tar.gz`, no `linux` segment. Those aliases
+# are never mirrored; the generator only ever emits versioned release URLs.)
+assets:
+  "linux/amd64+libc.glibc":
+    - "^amazon-corretto-[^-]+-linux-x64\\.tar\\.gz$"
+  "linux/amd64+libc.musl":
+    - "^amazon-corretto-[^-]+-alpine-linux-x64\\.tar\\.gz$"
+  "linux/arm64+libc.glibc":
+    - "^amazon-corretto-[^-]+-linux-aarch64\\.tar\\.gz$"
+  "linux/arm64+libc.musl":
+    - "^amazon-corretto-[^-]+-alpine-linux-aarch64\\.tar\\.gz$"
+  darwin/amd64:
+    - "^amazon-corretto-[^-]+-macosx-x64\\.tar\\.gz$"
+  darwin/arm64:
+    - "^amazon-corretto-[^-]+-macosx-aarch64\\.tar\\.gz$"
+  windows/amd64:
+    - "^amazon-corretto-[^-]+-windows-x64-jdk\\.zip$"
+
+asset_type:
+  type: archive
+  strip_components: 1
+
+# Derive the `binaries` claim from each extracted bundle. A JDK's `bin/` is
+# both large and version-dependent — JDK 8 ships `javah`/`policytool`, 11+ ship
+# `jshell`/`jpackage`/`jwebserver`, and this one spec publishes majors 8 through
+# 25 — so a single hand-written list is necessarily wrong for most of the range.
+# `auto` is the honest spelling of "derive it per bundle"; `verify` would demand
+# exactly the complete list that cannot be written down here.
+#
+# Every metadata file below points PATH at a real `${installPath}/<subdir>`
+# (`bin`, or `Contents/Home/bin` on macOS), which is what the load-time gate
+# requires — a bare `${installPath}` is exit 65.
+bin_scan: auto
+
+metadata:
+  default: metadata.json
+  platforms:
+    # macOS Corretto tarballs nest the JDK under Contents/Home — bin lives at
+    # ${installPath}/Contents/Home/bin (see metadata-darwin.json).
+    darwin/amd64: metadata-darwin.json
+    darwin/arm64: metadata-darwin.json
+
+catalog:
+  # Resolves against this spec's own directory, and keeping the logo here puts
+  # it inside this workflow's `corretto/**` path trigger — a repo-root logo.*
+  # sits in no path filter and replacing it would publish nothing.
+  # CATALOG.md is found by the default probe beside this file.
+  logo: logo.svg
+
+# Single wide range spans every JDK major (8.x – 25.x). Per-major patch
+# floors are enforced in scripts/generate.py so historical patches do not
+# bootstrap into the mirror on first run. Bump max when a new JDK major ships.
+versions:
+  min: "8.0.0"
+  max: "26"
+  new_per_run: 3
+  poll_interval: "0 */6 * * *"
+
+tests:
+  # `script:` resolves from the REPOSITORY ROOT, not from this spec's own
+  # directory — the opposite of `metadata.*` and `catalog.*` above.
+  - name: smoke
+    script: corretto/tests/smoke.star
+
+annotations:
+  # The redistributed bytes are OpenJDK as built by Amazon. See NOTICE.md for
+  # the Corresponding Source pointer GPLv2 §3 requires.
+  org.opencontainers.image.licenses: "GPL-2.0-only WITH Classpath-exception-2.0"
+
+announce:
+  package: amazon/corretto
+  fork: ocx-contrib/index

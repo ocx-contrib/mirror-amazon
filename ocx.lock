@@ -1,21 +1,47 @@
 [metadata]
-lock_version = 1
+lock_version = 3
 declaration_hash_version = 1
-declaration_hash = "sha256:478d0550e2e75d47dbc24bac673d99f6bddb9d8efb09bd04546f0b5d9db3f700"
-generated_by = "ocx 0.3.6"
-generated_at = "2026-07-16T13:26:40Z"
+declaration_hash = "sha256:5f56f8f7f5249dddd6f07e0c1f2953400358ba60dae5ad86f4fdcb0906fc2d19"
+generated_by = "ocx 0.5.0"
+generated_at = "2026-08-01T20:30:45Z"
 
 [[tool]]
 name = "cli"
 group = "default"
-pinned = "dev.ocx.sh/ocx/cli@sha256:075ff11deda2d9929849cb253293d8674afec325a3a8a75926d72e3f0a0331a7"
+repository = "ocx.sh/ocx/cli"
+
+[tool.platforms]
+"darwin/amd64" = "sha256:23c7027fbd09709647bb6691fcd82a5b4cad57ad9c1b5bdcc97d79ab3163ebaf"
+"darwin/arm64" = "sha256:9f8595fe452ad412c9b414805725ae540fc1074c9409061bb5d63660f8f3d3dd"
+"linux/amd64" = "sha256:016cb5f5d8a47037efc70b2e9df18e62e2afd7f7cb0773e77f929ff26bdf10cb"
+"linux/arm64" = "sha256:4b9a2a9a0c9e035a5157a20a7762829c415f6397530032f416f26a0bb99cc123"
+"windows/amd64" = "sha256:6361719ba1116f09a8b0f84c385e981009dc7c80bddf30a4390eafbc48c0a4b0"
+"windows/arm64" = "sha256:db8450b778cc13516546d064cd708680ae2b98262c482a4091a7332c3d70bc4a"
 
 [[tool]]
 name = "mirror"
 group = "default"
-pinned = "dev.ocx.sh/ocx/mirror@sha256:46a248add79174f55626b4476ee54c301a56e7b9742c32f37c3a229b21ab2f86"
+repository = "ocx.sh/ocx/mirror"
+
+[tool.platforms]
+"darwin/amd64" = "sha256:ba6138bab428052fcf6db82d387c6d4720fb9b33d7a28ba1b32ea7d290afc4e5"
+"darwin/arm64" = "sha256:bcc479bf9239c60a08517cb1f01db5d142fa4e092b6a140a5e40cb669c0c93a0"
+"linux/amd64" = "sha256:664bb58d35ec3735a633ae3169e072ece8a585943006736277085b24934c765d"
+"linux/arm64" = "sha256:12b5429ca012870bd19bda5f0edfceffbd409d1d622a2608e1df1953e38a0a32"
+"windows/amd64" = "sha256:cd3dfa49f2deb2878633648163dcd92ae5826f1d71fe27b8677cda7aad6a34b9"
+"windows/arm64" = "sha256:e38783f99f0bb9530414adc84a00e9d48f2176c86c04369a0b108e2dd71ae897"
 
 [[tool]]
 name = "uv"
 group = "default"
-pinned = "ocx.sh/uv@sha256:98ea612d787e9eb4ea8a9478a5002df631946d9ef20d626a055fe60d654eeba6"
+repository = "ocx.sh/astral-sh/uv"
+
+[tool.platforms]
+"darwin/amd64" = "sha256:f8d6924580df651815e744edce607148c2028eb160eee76caf08cdee7c2a1ec7"
+"darwin/arm64" = "sha256:69001b4a5572b632f592b53ad88f6059c263f56e0b0dc509e1755140d905971b"
+"linux/amd64" = "sha256:56cef303cbf5a5566f32c16b75ca803584990aebc450c3e0f0f2b392203ed5d5"
+"linux/amd64+libc.glibc" = "sha256:e46a02f3b8d32ec6b64f850281113a7c57749a50f14a265d09474ed6e8888af9"
+"linux/arm64" = "sha256:a3e5317c9bb4b66d431575e3886953c8908352a06d6d6a14145dbad608005658"
+"linux/arm64+libc.glibc" = "sha256:954c895182295ed2025af9df1b4da9aa8c52c41b24196e007c7977cd1720cad6"
+"windows/amd64" = "sha256:eb6ee5b0b16bc407623ea7c77b716135e95a20d31111adc613eb38d292e8039c"
+"windows/arm64" = "sha256:9fe0996e2b206beb2be47edf939449add2e928fc6bfbf5effefffccf2d214d5c"
