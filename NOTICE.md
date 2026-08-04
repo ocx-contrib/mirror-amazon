@@ -42,6 +42,13 @@ the matching git tag:
 - JDK 17 → <https://github.com/corretto/corretto-17>
 - JDK 21 → <https://github.com/corretto/corretto-21>
 - JDK 25 → <https://github.com/corretto/corretto-25>
+- JDK 26 → <https://github.com/corretto/corretto-26>
+- JDK 27 → <https://github.com/corretto/corretto-27>
+
+This list must name **every** major in `REPOS`
+([`corretto/scripts/generate.py`](corretto/scripts/generate.py)) — conveying a
+GPLv2 binary without its Corresponding Source pointer is the compliance gap, so
+adding a major there means adding it here in the same commit.
 
 Check out the exact release tag (see the version-scheme table in
 [`corretto/CATALOG.md`](corretto/CATALOG.md)); e.g. OCX version `21.0.10_7001`

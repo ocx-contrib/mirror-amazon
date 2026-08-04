@@ -9,13 +9,33 @@ index as `ocx.sh/amazon/<package>`.
 |---|---|---|---|
 | [`corretto/`](corretto/) | [corretto](https://github.com/corretto) | `ocx.sh/amazon/corretto` | `GPL-2.0-only WITH Classpath-exception-2.0` |
 
-`corretto/` mirrors JDK majors **8, 11, 17, 21 and 25** from one spec. Corretto
-ships **no GitHub release assets** — the download URLs live in the release-notes
-body on the `corretto.aws` CDN, so `corretto/scripts/generate.py` scrapes them,
-classifies each by platform and emits a `url_index`. A per-major patch floor
-(`MAJOR_FLOORS`) keeps first-run bootstrap small; bump it to retire older
-patches, or add a `(major, "corretto/corretto-<major>")` entry to `REPOS` plus a
-floor to mirror a new JDK major.
+`corretto/` mirrors JDK majors **8, 11, 17, 21, 25, 26 and 27** from one spec.
+Corretto ships **no GitHub release assets** — the download URLs live in the
+release-notes body on the `corretto.aws` CDN, so `corretto/scripts/generate.py`
+scrapes them, classifies each by platform and emits a `url_index`.
+
+**Which majors are mirrored is decided only by `REPOS` in that script.** The
+spec carries no `versions.max` on purpose: it is an *exclusive* bound, so it
+would have to be bumped in lockstep, and a `url_index` version outside the
+window is silently not resolved rather than reported — the drift would be
+invisible. Adding a major is therefore two edits in one file:
+
+1. a `(major, "corretto/corretto-<major>")` entry in `REPOS`, and
+2. a `MAJOR_FLOORS` entry — **without one the major is skipped wholesale**,
+   because `below_floor` returns `True` on a missing floor. Floor a brand-new
+   major open (`(N, 0, 0, 0, 0)`); floor an existing one at its first
+   non-prerelease so first-run bootstrap stays small.
+
+Then add it to the Corresponding Source list in [`NOTICE.md`](NOTICE.md) — GPLv2
+§3 requires a source pointer for every major whose binaries are conveyed.
+
+`corretto/corretto-27` is listed but has published **no releases** upstream as
+of 2026-08-03; it contributes nothing until Amazon ships it, then lands with no
+further edit.
+
+> `amazon/corretto:latest` follows the **highest** major, which is now 26 — a
+> non-LTS feature release. Pin `:25`, `:21`, `:17`, `:11` or `:8` for an LTS
+> line.
 
 ## Layout
 

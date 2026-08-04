@@ -17,7 +17,9 @@ Amazon Corretto is a no-cost, multiplatform, production-ready distribution of Op
 
 ## Available versions
 
-- **Corretto 25** — JDK 25 (latest)
+- **Corretto 27** — JDK 27 (not yet released upstream)
+- **Corretto 26** — JDK 26 (newest — feature release, not LTS)
+- **Corretto 25** — JDK 25 LTS
 - **Corretto 21** — JDK 21 LTS
 - **Corretto 17** — JDK 17 LTS
 - **Corretto 11** — JDK 11 LTS
@@ -29,7 +31,7 @@ Corretto tags are mapped to OCX versions as `major.minor.update_build`, where bu
 
 | JDK | GitHub tag format | Example tag | OCX version |
 |---|---|---|---|
-| 21, 25 | `major.minor.update.jdkBuild.rev` | `21.0.10.7.1` | `21.0.10_7001` |
+| 21, 25, 26, 27 | `major.minor.update.jdkBuild.rev` | `21.0.10.7.1` | `21.0.10_7001` |
 | 17 | `major.minor.update.jdkBuild.rev` | `17.0.14.7.1` | `17.0.14_7001` |
 | 11 | `major.minor.update.jdkBuild.rev` | `11.0.25.9.1` | `11.0.25_9001` |
 | 8 | `major.update.jdkBuild.rev` | `8.442.06.1` | `8.0.442_6001` |
@@ -37,6 +39,10 @@ Corretto tags are mapped to OCX versions as `major.minor.update_build`, where bu
 JDK 8 tags have no minor version — `minor=0` is inserted during conversion.
 
 Use `amazon/corretto:21` for the latest JDK 21 release, or `amazon/corretto:latest` for the newest release of the highest JDK major.
+
+`:latest` follows the **highest** major, which is 26 — a six-month feature
+release, not LTS. Pin an LTS line (`:25`, `:21`, `:17`, `:11`, `:8`) if you need
+one.
 
 ## Platforms
 
@@ -60,7 +66,7 @@ The Corretto JDK binaries redistributed here are licensed
 **`GPL-2.0-only WITH Classpath-exception-2.0`** (© Amazon Web Services; same
 license as OpenJDK). The complete Corresponding Source for each mirrored version is the
 OpenJDK source in the per-major upstream repo at the matching git tag —
-`corretto/corretto-{8,11,17,21,25}` — e.g. OCX `21.0.10_7001` → `git clone
+`corretto/corretto-{8,11,17,21,25,26,27}` — e.g. OCX `21.0.10_7001` → `git clone
 https://github.com/corretto/corretto-21 && git checkout 21.0.10.7.1` (see the
 version-scheme table above for the tag mapping). A 3-year written offer for the
 source is in the repository's `NOTICE.md`. The OCX mirror pipeline files are
