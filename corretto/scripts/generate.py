@@ -44,7 +44,19 @@ REPOS: list[tuple[int, str]] = [
     (17, "corretto/corretto-17"),
     (21, "corretto/corretto-21"),
     (25, "corretto/corretto-25"),
+    (26, "corretto/corretto-26"),
+    (27, "corretto/corretto-27"),
 ]
+
+# This list is the ONLY gate on which majors are mirrored — the spec carries no
+# `versions.max`, deliberately. A third bound there would have to be kept in
+# step with this one, and a url_index version outside the window is silently
+# not resolved rather than reported, so the drift would be invisible. Adding a
+# major here (plus its MAJOR_FLOORS entry below) is the whole change.
+#
+# `corretto/corretto-27` exists upstream but has published NO releases as of
+# 2026-08-03. It is listed now so the major lands on its own the day Amazon
+# ships it; until then it contributes an empty release list and nothing else.
 
 # Per-major patch floor (compared against the upstream Corretto tag tuple).
 # Versions below this are skipped so a fresh mirror does not bootstrap
@@ -60,6 +72,15 @@ MAJOR_FLOORS: dict[int, tuple[int, ...]] = {
     17: (17, 0, 13, 11, 1),
     21: (21, 0, 5, 11, 1),
     25: (25, 0, 0, 36, 1),
+    # 26.0.0.35.2 is the first non-prerelease of the major (2026-03-17); the
+    # .35.1 and .34.1 tags before it are EAs, which `include_prereleases=False`
+    # already drops. Same "floor at first GA" choice as 25.
+    26: (26, 0, 0, 35, 2),
+    # No releases yet, so there is no history to bootstrap and the floor is
+    # open. A major with NO entry here is skipped ENTIRELY — `below_floor`
+    # returns True on a missing floor — so this line is what makes 27 publish
+    # when it ships, not the REPOS entry alone.
+    27: (27, 0, 0, 0, 0),
 }
 
 # Sidecars and non-portable artifacts to exclude: signatures, checksums,

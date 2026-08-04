@@ -13,8 +13,9 @@ target:
 
 # Corretto ships no GitHub release assets — download URLs live in the
 # release-notes body on the corretto.aws CDN. scripts/generate.py scrapes them
-# and emits a url_index covering ALL mirrored JDK majors (8, 11, 17, 21, 25).
-# Per-major patch floors live in that script (MAJOR_FLOORS).
+# and emits a url_index covering ALL mirrored JDK majors
+# (8, 11, 17, 21, 25, 26, 27). Per-major patch floors live in that script
+# (MAJOR_FLOORS) — a major listed in REPOS with no floor is skipped entirely.
 #
 # `command` resolves against THIS spec's directory, so the path is
 # `scripts/generate.py` and not `corretto/scripts/generate.py`.
@@ -80,7 +81,7 @@ asset_type:
 # Derive the `binaries` claim from each extracted bundle. A JDK's `bin/` is
 # both large and version-dependent — JDK 8 ships `javah`/`policytool`, 11+ ship
 # `jshell`/`jpackage`/`jwebserver`, and this one spec publishes majors 8 through
-# 25 — so a single hand-written list is necessarily wrong for most of the range.
+# 27 — so a single hand-written list is necessarily wrong for most of the range.
 # `auto` is the honest spelling of "derive it per bundle"; `verify` would demand
 # exactly the complete list that cannot be written down here.
 #
@@ -104,12 +105,18 @@ catalog:
   # CATALOG.md is found by the default probe beside this file.
   logo: logo.svg
 
-# Single wide range spans every JDK major (8.x – 25.x). Per-major patch
-# floors are enforced in scripts/generate.py so historical patches do not
-# bootstrap into the mirror on first run. Bump max when a new JDK major ships.
+# Open upper bound — which majors are mirrored is decided ONLY by `REPOS` in
+# scripts/generate.py (8, 11, 17, 21, 25, 26, 27), and each needs a
+# `MAJOR_FLOORS` entry there or `below_floor` skips it wholesale. A
+# `versions.max` here would be a second gate over the same decision: it is
+# EXCLUSIVE, so it read `"26"` to cap at 25.x, and adding a major without
+# bumping it strands that major with no error — a url_index version outside
+# the window is silently not resolved, never reported. One gate, in the
+# generator, where the majors are already listed.
+#
+# `min` stays: it is a real floor on the oldest major, not a per-major knob.
 versions:
   min: "8.0.0"
-  max: "26"
   new_per_run: 3
   poll_interval: "0 */6 * * *"
 
