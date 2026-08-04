@@ -118,7 +118,7 @@ catalog:
 versions:
   min: "8.0.0"
   new_per_run: 3
-  poll_interval: "0 */6 * * *"
+  poll_interval: "1 0-23/6 * * *"
 
 tests:
   # `script:` resolves from the REPOSITORY ROOT, not from this spec's own
